@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+
+:root {
+  /* Primary */
+  --color-primary: #ffffff;
+
+  /* Accent – full scale */
+  --color-accent-50:  #f2f3fb;
+  --color-accent-100: #e4e5f7;
+  --color-accent-200: #cdd0ef;
+  --color-accent-300: #B2B0E8; /* given */
+  --color-accent-400: #9497d7;
+  --color-accent-500: #7A85C1; /* given */
+  --color-accent-600: #585ea9;
+  --color-accent-700: #3B38A0; /* given */
+  --color-accent-800: #262c89; /*  */
+  --color-accent-900: #1A2A80; /* given */
+ --color-black-soft: #111111;   /* subtitle */
+--color-black-darker: #1a1a1a; /* title */
+--color-black-light: #222222;  /* description */
+
+
+
+  
+}
