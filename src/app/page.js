@@ -152,7 +152,6 @@ function LoadingScreen() {
 
 import { motion, AnimatePresence } from 'framer-motion';
 import {  ChevronRight, Users, Target, X, Play, ExternalLink } from 'lucide-react';
-
 function HeroSection({
   userLocation,
   onLocationChange,
@@ -169,7 +168,6 @@ function HeroSection({
   const [localSearchQuery, setLocalSearchQuery] = useState("");
   const [curtainOpen, setCurtainOpen] = useState(false);
   const [selectedSlide, setSelectedSlide] = useState(null);
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const slideIntervalRef = useRef(null);
   const searchInputRef = useRef(null);
@@ -268,7 +266,7 @@ function HeroSection({
   };
 
   // -----------------------
-  // 🔄 AUTO-ROTATE CAROUSEL
+  // 🔄 AUTO-ROTATE CAROUSEL - FIXED DEPENDENCY ARRAY
   // -----------------------
   useEffect(() => {
     if (isAutoPlaying && heroSlides.length > 1) {
@@ -279,7 +277,7 @@ function HeroSection({
       }, 5000);
     }
     return () => clearInterval(slideIntervalRef.current);
-  }, [isAutoPlaying]);
+  }, [isAutoPlaying, heroSlides.length]); // Added heroSlides.length to dependency array
 
   const goToSlide = (index) => {
     setCurrentSlide(index);
@@ -321,10 +319,10 @@ function HeroSection({
     };
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [curtainOpen]);
+  }, [curtainOpen]); // Only depend on curtainOpen
 
   // -----------------------
-  // OUTSIDE CLICK HIDE SUGGESTIONS
+  // OUTSIDE CLICK HIDE SUGGESTIONS - FIXED DEPENDENCY ARRAY
   // -----------------------
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -338,7 +336,7 @@ function HeroSection({
     document.addEventListener("mousedown", handleClickOutside);
     return () =>
       document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [onHideSuggestions]); // Added onHideSuggestions to dependency array
 
   return (
     <>
@@ -590,7 +588,6 @@ function HeroSection({
     </>
   );
 }
-
 // ============================================================================
 // SEARCH FILTER BAR COMPONENT
 // ============================================================================
