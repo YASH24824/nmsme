@@ -151,443 +151,476 @@ function LoadingScreen() {
 // ============================================================================
 
 import { motion, AnimatePresence } from 'framer-motion';
-import {  ChevronRight, Users, Target, X, Play, ExternalLink } from 'lucide-react';
-function HeroSection({
-  userLocation,
-  onLocationChange,
-  onUseLocation,
-  onSearch,
-  searchSuggestions,
-  showSuggestions,
-  onHideSuggestions,
-  onSuggestionSelect,
-  isScrolled,
-}) {
+import { ChevronLeft, ChevronRight, X, Check, ArrowRight } from 'lucide-react';
+
+function HeroSection() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [slideDirection, setSlideDirection] = useState('right');
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const [localSearchQuery, setLocalSearchQuery] = useState("");
-  const [curtainOpen, setCurtainOpen] = useState(false);
-  const [selectedSlide, setSelectedSlide] = useState(null);
+  const autoPlayRef = useRef(null);
+  const panelRef = useRef(null);
+  const heroRef = useRef(null);
 
-  const slideIntervalRef = useRef(null);
-  const searchInputRef = useRef(null);
-  const curtainRef = useRef(null);
-  const router = useRouter();
-
-  // -----------------------
-  // 🔵 HERO SLIDES (with expanded details for curtain view)
-  // -----------------------
+  // Hero slides data
   const heroSlides = [
     {
       id: 1,
       title: "Connect Local Businesses",
       subtitle: "Grow Together",
-      description:
-        "Discover verified suppliers, connect with qualified buyers, and grow your business through India's premier MSME networking platform.",
+      description: "Discover verified suppliers, connect with qualified buyers, and grow your business through India's premier MSME networking platform.",
       backgroundImage: "/imm.jpeg",
-      ctaText: "Start Exploring",
-      secondaryCta: "Watch Demo",
-      icon: <RocketLaunch />,
-      badge: "Trusted by 10,000+ MSMEs",
-      // Additional details for curtain view
-      fullDescription: "MSME Sahaay's networking platform connects you with thousands of verified businesses across India. Access real-time market insights, participate in exclusive business events, and leverage our intelligent matchmaking algorithm to find the perfect partners for growth. Our platform ensures every connection is meaningful and growth-oriented.",
-      features: [
-        "Verified Business Profiles",
-        "Real-time Market Insights",
-        "Intelligent Matchmaking",
-        "Exclusive Business Events"
+      fullTitle: "Connect Local Businesses & Grow Together",
+      fullDescription: "MSME Sahaay's networking platform connects you with thousands of verified businesses across India. Access real-time market insights, participate in exclusive business events, and leverage our intelligent matchmaking algorithm.",
+      keyPoints: [
+        "Verified Business Profiles with Trust Scores",
+        "Real-time Market Insights & Analytics",
+        "Intelligent Matchmaking Algorithm",
+        "Exclusive Business Networking Events"
       ],
-      stats: [
-        { label: "Businesses", value: "10,000+" },
-        { label: "Success Rate", value: "92%" },
-        { label: "Cities", value: "150+" }
-      ]
+      ctaText: "Start Networking",
+      ctaLink: "/network"
     },
     {
       id: 2,
       title: "Find Quality Suppliers",
       subtitle: "Build Your Network",
-      description:
-        "Access 5,000+ verified manufacturers, wholesalers, and service providers across India. Quality assured, delivery guaranteed.",
+      description: "Access 5,000+ verified manufacturers, wholesalers, and service providers across India. Quality assured, delivery guaranteed.",
       backgroundImage: "/imm.jpeg",
-      ctaText: "Find Suppliers",
-      secondaryCta: "Learn More",
-      icon: <Factory />,
-      badge: "5,000+ Factories",
-      fullDescription: "Our curated supplier database includes manufacturers, wholesalers, and service providers verified for quality and reliability. Each supplier undergoes a rigorous verification process, ensuring you get the best products at competitive prices. From raw materials to finished goods, find everything your business needs.",
-      features: [
-        "Quality Verified Suppliers",
-        "Competitive Pricing",
-        "Delivery Tracking",
-        "Rating & Reviews"
+      fullTitle: "Find Quality Suppliers & Build Your Network",
+      fullDescription: "Our curated supplier database includes manufacturers, wholesalers, and service providers verified for quality and reliability. Each supplier undergoes a rigorous verification process to ensure business credibility.",
+      keyPoints: [
+        "Quality Verified Suppliers Only",
+        "Competitive Pricing & Bulk Discounts",
+        "End-to-End Delivery Tracking",
+        "Verified Rating & Review System"
       ],
-      stats: [
-        { label: "Suppliers", value: "5,000+" },
-        { label: "Categories", value: "200+" },
-        { label: "Delivery", value: "98%" }
-      ]
+      ctaText: "Explore Suppliers",
+      ctaLink: "/suppliers"
     },
     {
       id: 3,
       title: "Expand Your Market",
       subtitle: "Reach New Customers",
-      description:
-        "Showcase your products to 15,000+ active business buyers. Increase your sales and grow your customer base exponentially.",
+      description: "Showcase your products to 15,000+ active business buyers. Increase your sales and grow your customer base exponentially.",
       backgroundImage: "/imm.jpeg",
-      ctaText: "List Your Business",
-      secondaryCta: "See Pricing",
-      icon: <RocketLaunch />,
-      badge: "95% Success Rate",
-      fullDescription: "Expand your market reach with our powerful marketing tools and extensive buyer network. Showcase your products to thousands of verified business buyers looking for exactly what you offer. Our platform provides analytics, lead generation, and sales tools to maximize your growth potential.",
-      features: [
-        "Product Showcase",
-        "Targeted Marketing",
-        "Sales Analytics",
-        "Lead Generation"
+      fullTitle: "Expand Your Market & Reach New Customers",
+      fullDescription: "Expand your market reach with our powerful marketing tools and extensive buyer network. Showcase your products to thousands of verified business buyers across multiple industries.",
+      keyPoints: [
+        "Premium Product Showcase Pages",
+        "Targeted Marketing Campaigns",
+        "Advanced Sales Analytics Dashboard",
+        "Automated Lead Generation System"
       ],
-      stats: [
-        { label: "Active Buyers", value: "15,000+" },
-        { label: "Growth Rate", value: "95%" },
-        { label: "Countries", value: "25+" }
-      ]
-    },
+      ctaText: "Grow Your Business",
+      ctaLink: "/grow"
+    }
   ];
 
-  const handleSearchSubmit = () => {
-    if (localSearchQuery.trim()) {
-      onSearch(localSearchQuery);
-    }
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      handleSearchSubmit();
-    }
-  };
-
-  // -----------------------
-  // 🔄 AUTO-ROTATE CAROUSEL - FIXED DEPENDENCY ARRAY
-  // -----------------------
+  // Auto-rotate carousel
   useEffect(() => {
-    if (isAutoPlaying && heroSlides.length > 1) {
-      slideIntervalRef.current = setInterval(() => {
-        setCurrentSlide((prev) =>
+    if (isAutoPlaying && heroSlides.length > 1 && !isPanelOpen) {
+      autoPlayRef.current = setInterval(() => {
+        setSlideDirection('right');
+        setCurrentSlide(prev => 
           prev === heroSlides.length - 1 ? 0 : prev + 1
         );
       }, 5000);
     }
-    return () => clearInterval(slideIntervalRef.current);
-  }, [isAutoPlaying, heroSlides.length]); // Added heroSlides.length to dependency array
-
-  const goToSlide = (index) => {
-    setCurrentSlide(index);
-    clearInterval(slideIntervalRef.current);
-    setTimeout(() => setIsAutoPlaying(true), 4000);
-  };
-
-  const nextSlide = () => goToSlide((currentSlide + 1) % heroSlides.length);
-  const prevSlide = () =>
-    goToSlide(
-      currentSlide === 0 ? heroSlides.length - 1 : currentSlide - 1
-    );
-
-  // -----------------------
-  // CURTAIN OPEN/CLOSE FUNCTIONS
-  // -----------------------
-  const openCurtain = (slideIndex) => {
-    setSelectedSlide(slideIndex);
-    setCurtainOpen(true);
-    document.body.style.overflow = 'hidden'; // Prevent scrolling
-    setIsAutoPlaying(false);
-  };
-
-  const closeCurtain = () => {
-    setCurtainOpen(false);
-    document.body.style.overflow = 'auto'; // Restore scrolling
-    setTimeout(() => {
-      setSelectedSlide(null);
-      setIsAutoPlaying(true);
-    }, 500);
-  };
-
-  // Close curtain on Escape key
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === 'Escape' && curtainOpen) {
-        closeCurtain();
+    
+    return () => {
+      if (autoPlayRef.current) {
+        clearInterval(autoPlayRef.current);
       }
     };
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [curtainOpen]); // Only depend on curtainOpen
+  }, [isAutoPlaying, heroSlides.length, isPanelOpen]);
 
-  // -----------------------
-  // OUTSIDE CLICK HIDE SUGGESTIONS - FIXED DEPENDENCY ARRAY
-  // -----------------------
+  // Navigation functions
+  const goToSlide = useCallback((index, direction = 'right') => {
+    setSlideDirection(direction);
+    setCurrentSlide(index);
+    
+    // Reset auto-play timer
+    if (autoPlayRef.current) {
+      clearInterval(autoPlayRef.current);
+    }
+    if (isAutoPlaying && !isPanelOpen) {
+      autoPlayRef.current = setInterval(() => {
+        setSlideDirection('right');
+        setCurrentSlide(prev => 
+          prev === heroSlides.length - 1 ? 0 : prev + 1
+        );
+      }, 5000);
+    }
+  }, [heroSlides.length, isAutoPlaying, isPanelOpen]);
+
+  const nextSlide = useCallback(() => {
+    goToSlide(
+      currentSlide === heroSlides.length - 1 ? 0 : currentSlide + 1,
+      'right'
+    );
+  }, [currentSlide, goToSlide, heroSlides.length]);
+
+  const prevSlide = useCallback(() => {
+    goToSlide(
+      currentSlide === 0 ? heroSlides.length - 1 : currentSlide - 1,
+      'left'
+    );
+  }, [currentSlide, goToSlide, heroSlides.length]);
+
+  // Open panel function (click anywhere on hero)
+  const openPanel = useCallback((slideIndex) => {
+    setCurrentSlide(slideIndex);
+    setIsPanelOpen(true);
+    setIsAutoPlaying(false);
+    
+    if (autoPlayRef.current) {
+      clearInterval(autoPlayRef.current);
+    }
+  }, []);
+
+  // Close panel function
+  const closePanel = useCallback(() => {
+    setIsPanelOpen(false);
+    setIsAutoPlaying(true);
+  }, []);
+
+  // Handle click anywhere on hero section to open panel
+  useEffect(() => {
+    const handleHeroClick = (event) => {
+      // If panel is not open and click is on the hero container (not on buttons or dots)
+      if (!isPanelOpen && heroRef.current && heroRef.current.contains(event.target)) {
+        // Check if click is not on navigation elements
+        const isNavigationElement = 
+          event.target.closest('button') || 
+          event.target.closest('a') ||
+          event.target.closest('.carousel-nav') ||
+          event.target.closest('.hero-cta');
+        
+        if (!isNavigationElement) {
+          openPanel(currentSlide);
+        }
+      }
+    };
+
+    const heroElement = heroRef.current;
+    if (heroElement) {
+      heroElement.addEventListener('click', handleHeroClick);
+    }
+
+    return () => {
+      if (heroElement) {
+        heroElement.removeEventListener('click', handleHeroClick);
+      }
+    };
+  }, [isPanelOpen, currentSlide, openPanel]);
+
+  // Handle click outside panel on mobile (close panel when clicking outside)
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        searchInputRef.current &&
-        !searchInputRef.current.contains(event.target)
-      ) {
-        onHideSuggestions();
+      if (panelRef.current && !panelRef.current.contains(event.target)) {
+        // Check if we're on mobile (panel should cover full width)
+        const isMobile = window.innerWidth < 768;
+        if (isMobile) {
+          closePanel();
+        } else {
+          // On desktop, only close if click is on the left 50% (carousel side)
+          if (heroRef.current && heroRef.current.contains(event.target)) {
+            closePanel();
+          }
+        }
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
-  }, [onHideSuggestions]); // Added onHideSuggestions to dependency array
+
+    const handleEscapeKey = (e) => {
+      if (e.key === 'Escape' && isPanelOpen) {
+        closePanel();
+      }
+    };
+
+    if (isPanelOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleEscapeKey);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [isPanelOpen, closePanel]);
+
+  // Pause auto-play on hover
+  const handleMouseEnter = () => {
+    setIsAutoPlaying(false);
+    if (autoPlayRef.current) {
+      clearInterval(autoPlayRef.current);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (!isPanelOpen) {
+      setIsAutoPlaying(true);
+    }
+  };
+
+  // Handle button click to open panel
+  const handleCtaClick = (e) => {
+    e.stopPropagation();
+    openPanel(currentSlide);
+  };
 
   return (
-    <>
-      {/* MAIN HERO SECTION */}
-      <section className="w-full flex flex-col items-center justify-center py-6 px-3 lg:px-10 relative">
-        <div className="w-full bg-white rounded-3xl p-6 lg:p-10 space-y-8">
-          {/* 🔵 TOP CAROUSEL WITH CURTAIN TRIGGER */}
-          <div className="w-full flex justify-center">
-            <div 
-              className="w-full h-60 sm:h-72 md:h-80 rounded-2xl overflow-hidden cursor-pointer group"
-              onClick={() => openCurtain(currentSlide)}
-            >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={heroSlides[currentSlide].id}
-                  initial={{ opacity: 0, x: 40 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -40 }}
-                  transition={{ duration: 0.6 }}
-                  className="relative w-full h-full"
-                >
-                  <Image
-                    src={heroSlides[currentSlide].backgroundImage}
-                    alt="Hero Slide"
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  
-                  {/* Overlay with click hint */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-2 text-white bg-black/50 backdrop-blur-sm px-4 py-2 rounded-full">
-                      <Play className="w-4 h-4" />
-                      <span className="text-sm font-medium">Click to explore</span>
-                    </div>
-                  </div>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </div>
-
-          {/* 🔻 BOTTOM SECTION — MOBILE STACK / DESKTOP ROW */}
-          <div className="flex flex-col md:flex-row gap-6 w-full">
-            {/* LEFT TEXT CARD */}
-            <div className="w-full md:w-1/3 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 space-y-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-bold text-gray-900">About MSME Sahaay</h3>
-                <button 
-                  onClick={() => router.push('/about')}
-                  className="text-blue-600 hover:text-blue-700 flex items-center space-x-1 text-sm"
-                >
-                  <span>Learn more</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-              <p className="text-gray-700 text-sm font-sans leading-relaxed">
-                MSME Sahaay is a modern platform designed to uplift MSMEs with the right tools, visibility, and guidance. We help businesses grow faster by simplifying selling, buying, networking, and branding. With MSME Sahaay, every small business gets the power to think bigger, act smarter, and scale confidently.
-              </p>
-              
-              {/* Quick Stats */}
-              <div className="grid grid-cols-3 gap-2 pt-4 border-t">
-                <div className="text-center">
-                  <div className="text-lg font-bold text-blue-600">10K+</div>
-                  <div className="text-xs text-gray-600">Businesses</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-green-600">95%</div>
-                  <div className="text-xs text-gray-600">Success Rate</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-purple-600">150+</div>
-                  <div className="text-xs text-gray-600">Cities</div>
-                </div>
-              </div>
-            </div>
-
-            {/* RIGHT MINI CAROUSEL GRID */}
-            <div className="w-full md:w-2/3">
-              <div className="grid grid-cols-3 gap-4">
-                {heroSlides.map((slide, index) => (
-                  <motion.div
-                    key={slide.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="relative h-56 rounded-2xl overflow-hidden shadow-md border border-gray-200 cursor-pointer group"
-                    onClick={() => openCurtain(index)}
-                  >
-                    <Image
-                      src={slide.backgroundImage}
-                      alt={slide.title}
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                    
-                    {/* Content Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent p-4 flex flex-col justify-end">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div className="w-6 h-6 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                          {slide.icon}
-                        </div>
-                        <span className="text-white/90 text-xs font-medium">{slide.badge}</span>
-                      </div>
-                      <h4 className="text-white font-semibold text-sm mb-1">{slide.title}</h4>
-                      <p className="text-white/80 text-xs line-clamp-2">{slide.description}</p>
-                      
-                      {/* Expand Button */}
-                      <div className="absolute top-4 right-4 w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <ExternalLink className="w-4 h-4 text-white" />
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Carousel Controls */}
-          <div className="flex justify-center space-x-4">
-            {heroSlides.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => goToSlide(index)}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  currentSlide === index 
-                    ? 'bg-blue-600 w-8' 
-                    : 'bg-gray-300 hover:bg-gray-400'
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CURTAIN OVERLAY */}
-      <AnimatePresence>
-        {curtainOpen && selectedSlide !== null && (
-          <>
-            {/* Backdrop */}
+    <section className="relative w-full bg-white py-8 md:py-12 px-2 md:px-5">
+      <div className="max-w-8xl mx-auto">
+        {/* Hero Container with fixed height */}
+        <div 
+          ref={heroRef}
+          className="relative w-full h-[500px] md:h-[600px] rounded-2xl md:rounded-3xl overflow-hidden shadow-xl cursor-pointer"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          {/* Main Carousel */}
+          <AnimatePresence mode="wait" initial={false}>
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-              onClick={closeCurtain}
-            />
-            
-            {/* Curtain Panel */}
-            <motion.div
-              ref={curtainRef}
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ 
-                type: "spring",
-                damping: 25,
-                stiffness: 200
+              key={heroSlides[currentSlide].id}
+              initial={{ 
+                opacity: 0,
+                x: slideDirection === 'right' ? 100 : -100 
               }}
-              className="fixed top-0 right-0 h-full w-full md:w-3/4 lg:w-2/3 bg-white z-50 overflow-y-auto shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
+              animate={{ 
+                opacity: 1,
+                x: 0 
+              }}
+              exit={{ 
+                opacity: 0,
+                x: slideDirection === 'right' ? -100 : 100 
+              }}
+              transition={{
+                duration: 0.5,
+                ease: "easeInOut"
+              }}
+              className="absolute inset-0"
             >
-              {/* Close Button */}
-              <button
-                onClick={closeCurtain}
-                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center z-50"
-              >
-                <X className="w-5 h-5 text-gray-700" />
-              </button>
-
-              {/* Curtain Content */}
-              <div className="h-full">
-                {/* Hero Image */}
-                <div className="relative h-72 md:h-80 w-full">
-                  <Image
-                    src={heroSlides[selectedSlide].backgroundImage}
-                    alt={heroSlides[selectedSlide].title}
-                    fill
-                    className="object-cover"
-                  />
+              {/* Background Image */}
+              <div className="relative w-full h-full">
+                <Image
+                  src={heroSlides[currentSlide].backgroundImage}
+                  alt={heroSlides[currentSlide].title}
+                  fill
+                  className="object-contain"
+                  priority
+                />
+                
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />
+                
+                {/* Content Overlay */}
+                <div className="absolute inset-0 flex items-center">
+                  <div className="px-8 md:px-12 lg:px-16 max-w-2xl">
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <span className="inline-block px-4 py-1.5 bg-white/10 backdrop-blur-sm rounded-full text-white/90 text-sm font-medium mb-4">
+                        {heroSlides[currentSlide].subtitle}
+                      </span>
+                      
+                      <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+                        {heroSlides[currentSlide].title}
+                      </h1>
+                      
+                      <p className="text-base md:text-lg text-white/90 mb-6 max-w-xl">
+                        {heroSlides[currentSlide].description}
+                      </p>
+                      
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <button
+                          onClick={handleCtaClick}
+                          className="px-6 py-3 bg-white text-gray-900 font-semibold rounded-lg hover:bg-gray-100 transition-all duration-300 flex items-center justify-center gap-2 group w-fit hero-cta"
+                        >
+                          <span>Learn More</span>
+                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </button>
+                        
+                        <button 
+                          onClick={(e) => e.stopPropagation()}
+                          className="px-6 py-3 bg-transparent border-2 border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-all duration-300 w-fit hero-cta"
+                        >
+                          Watch Demo
+                        </button>
+                      </div>
+                    </motion.div>
+                  </div>
                 </div>
-
-                {/* Content */}
-                <div className="p-6 md:p-8 lg:p-12">
-                  {/* Header */}
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                        {heroSlides[selectedSlide].icon}
-                      </div>
-                      <div>
-                        <div className="text-sm text-blue-600 font-medium">
-                          {heroSlides[selectedSlide].badge}
-                        </div>
-                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-                          {heroSlides[selectedSlide].title}
-                        </h1>
-                        <p className="text-gray-600">{heroSlides[selectedSlide].subtitle}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Stats */}
-                  <div className="grid grid-cols-3 gap-4 mb-8 p-4 bg-gray-50 rounded-xl">
-                    {heroSlides[selectedSlide].stats?.map((stat, index) => (
-                      <div key={index} className="text-center">
-                        <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
-                        <div className="text-sm text-gray-600">{stat.label}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Full Description */}
-                  <div className="mb-8">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-900">Overview</h3>
-                    <p className="text-gray-700 leading-relaxed">
-                      {heroSlides[selectedSlide].fullDescription}
-                    </p>
-                  </div>
-
-                  {/* Features */}
-                  <div className="mb-8">
-                    <h3 className="text-lg font-semibold mb-4 text-gray-900">Key Features</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {heroSlides[selectedSlide].features?.map((feature, index) => (
-                        <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                          <span className="text-gray-700">{feature}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* CTA Buttons */}
-                  <div className="flex flex-col sm:flex-row gap-4 pt-8 border-t">
-                    <button className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors flex-1 flex items-center justify-center space-x-2">
-                      <span>{heroSlides[selectedSlide].ctaText}</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                    <button className="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors flex-1">
-                      {heroSlides[selectedSlide].secondaryCta}
-                    </button>
-                  </div>
+                
+                {/* Click Indicator */}
+                <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex items-center gap-2 text-white/80 text-sm animate-pulse">
+                  <span>Click anywhere for details</span>
+                  <ArrowRight className="w-4 h-4" />
                 </div>
               </div>
             </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </>
+          </AnimatePresence>
+
+          {/* Carousel Navigation Dots */}
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 z-10 carousel-nav">
+            {heroSlides.map((_, index) => (
+              <button
+                key={index}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goToSlide(index, index > currentSlide ? 'right' : 'left');
+                }}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  currentSlide === index 
+                    ? 'w-6 bg-white' 
+                    : 'bg-white/50 hover:bg-white/80'
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
+
+          {/* Navigation Arrows */}
+          {heroSlides.length > 1 && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  prevSlide();
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 z-10 carousel-nav"
+                aria-label="Previous slide"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  nextSlide();
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 z-10 carousel-nav"
+                aria-label="Next slide"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </>
+          )}
+
+          {/* Content Panel */}
+          <AnimatePresence>
+            {isPanelOpen && (
+              <motion.div
+                ref={panelRef}
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ 
+                  type: "spring",
+                  damping: 25,
+                  stiffness: 300
+                }}
+                className="absolute right-0 top-0 h-full w-full md:w-1/2 bg-white shadow-2xl z-20 overflow-hidden border-l border-gray-200"
+              >
+                <div className="h-full flex flex-col">
+                  {/* Panel Header */}
+                  <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-xl md:text-2xl font-bold text-gray-900">
+                          {heroSlides[currentSlide].fullTitle}
+                        </h2>
+                        <p className="text-gray-600 text-sm md:text-base mt-1">
+                          Detailed Information
+                        </p>
+                      </div>
+                      
+                      <button
+                        onClick={closePanel}
+                        className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors duration-200"
+                        aria-label="Close panel"
+                      >
+                        <X className="w-4 h-4 md:w-5 md:h-5 text-gray-700" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Panel Content */}
+                  <div className="flex-1 overflow-y-auto p-4 md:p-6">
+                    {/* Description */}
+                    <div className="mb-4 md:mb-6">
+                      <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-2 md:mb-3">
+                        Overview
+                      </h3>
+                      <p className="text-gray-700 text-sm md:text-base leading-relaxed">
+                        {heroSlides[currentSlide].fullDescription}
+                      </p>
+                    </div>
+
+                    {/* Key Points */}
+                    <div className="mb-4 md:mb-6">
+                      <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-2 md:mb-3">
+                        Key Features
+                      </h3>
+                      <div className="space-y-2 md:space-y-3">
+                        {heroSlides[currentSlide].keyPoints.map((point, index) => (
+                          <div 
+                            key={index}
+                            className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg"
+                          >
+                            <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <Check className="w-3 h-3 text-blue-600" />
+                            </div>
+                            <span className="text-gray-700 text-sm md:text-base">{point}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="grid grid-cols-3 gap-2 md:gap-3 mb-4 md:mb-6">
+                      <div className="text-center p-2 md:p-3 bg-blue-50 rounded-lg">
+                        <div className="text-base md:text-lg font-bold text-blue-700">10K+</div>
+                        <div className="text-xs md:text-sm text-gray-600 mt-1">Businesses</div>
+                      </div>
+                      <div className="text-center p-2 md:p-3 bg-green-50 rounded-lg">
+                        <div className="text-base md:text-lg font-bold text-green-700">95%</div>
+                        <div className="text-xs md:text-sm text-gray-600 mt-1">Success Rate</div>
+                      </div>
+                      <div className="text-center p-2 md:p-3 bg-purple-50 rounded-lg">
+                        <div className="text-base md:text-lg font-bold text-purple-700">150+</div>
+                        <div className="text-xs md:text-sm text-gray-600 mt-1">Cities</div>
+                      </div>
+                    </div>
+
+                    {/* CTA Button */}
+                    <div className="pt-4 border-t border-gray-100">
+                      <button className="w-full py-3 md:py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 flex items-center justify-center gap-2 group shadow-md">
+                        <span className="text-sm md:text-base">{heroSlides[currentSlide].ctaText}</span>
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </button>
+                      
+                      <p className="text-center text-gray-500 text-xs md:text-sm mt-2 md:mt-3">
+                        No credit card required • Free 14-day trial
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </section>
   );
 }
+
+
+
+
+
 // ============================================================================
 // SEARCH FILTER BAR COMPONENT
 // ============================================================================
