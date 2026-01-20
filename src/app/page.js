@@ -150,12 +150,13 @@ function LoadingScreen() {
 // HERO SECTION COMPONENT
 // ============================================================================
 
-
+import { motion, AnimatePresence } from 'framer-motion';
+import {  ChevronRight, Users, Target, X, Play, ExternalLink } from 'lucide-react';
 
 function HeroSection({
   userLocation,
   onLocationChange,
-  onUseLocation,  
+  onUseLocation,
   onSearch,
   searchSuggestions,
   showSuggestions,
@@ -166,54 +167,92 @@ function HeroSection({
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [localSearchQuery, setLocalSearchQuery] = useState("");
+  const [curtainOpen, setCurtainOpen] = useState(false);
+  const [selectedSlide, setSelectedSlide] = useState(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
   const slideIntervalRef = useRef(null);
   const searchInputRef = useRef(null);
- const router = useRouter();
+  const curtainRef = useRef(null);
+  const router = useRouter();
 
-  // Hero section mock data
+  // -----------------------
+  // 🔵 HERO SLIDES (with expanded details for curtain view)
+  // -----------------------
   const heroSlides = [
     {
       id: 1,
       title: "Connect Local Businesses",
       subtitle: "Grow Together",
-      description: "Discover verified suppliers, connect with qualified buyers, and grow your business through India's premier MSME networking platform.",
-      backgroundImage: "/101.jpeg",
+      description:
+        "Discover verified suppliers, connect with qualified buyers, and grow your business through India's premier MSME networking platform.",
+      backgroundImage: "/imm.jpeg",
       ctaText: "Start Exploring",
       secondaryCta: "Watch Demo",
       icon: <RocketLaunch />,
       badge: "Trusted by 10,000+ MSMEs",
+      // Additional details for curtain view
+      fullDescription: "MSME Sahaay's networking platform connects you with thousands of verified businesses across India. Access real-time market insights, participate in exclusive business events, and leverage our intelligent matchmaking algorithm to find the perfect partners for growth. Our platform ensures every connection is meaningful and growth-oriented.",
+      features: [
+        "Verified Business Profiles",
+        "Real-time Market Insights",
+        "Intelligent Matchmaking",
+        "Exclusive Business Events"
+      ],
+      stats: [
+        { label: "Businesses", value: "10,000+" },
+        { label: "Success Rate", value: "92%" },
+        { label: "Cities", value: "150+" }
+      ]
     },
     {
       id: 2,
       title: "Find Quality Suppliers",
       subtitle: "Build Your Network",
-      description: "Access 5,000+ verified manufacturers, wholesalers, and service providers across India. Quality assured, delivery guaranteed.",
-      backgroundImage: "102.jpeg",
+      description:
+        "Access 5,000+ verified manufacturers, wholesalers, and service providers across India. Quality assured, delivery guaranteed.",
+      backgroundImage: "/imm.jpeg",
       ctaText: "Find Suppliers",
       secondaryCta: "Learn More",
       icon: <Factory />,
       badge: "5,000+ Factories",
+      fullDescription: "Our curated supplier database includes manufacturers, wholesalers, and service providers verified for quality and reliability. Each supplier undergoes a rigorous verification process, ensuring you get the best products at competitive prices. From raw materials to finished goods, find everything your business needs.",
+      features: [
+        "Quality Verified Suppliers",
+        "Competitive Pricing",
+        "Delivery Tracking",
+        "Rating & Reviews"
+      ],
+      stats: [
+        { label: "Suppliers", value: "5,000+" },
+        { label: "Categories", value: "200+" },
+        { label: "Delivery", value: "98%" }
+      ]
     },
     {
       id: 3,
       title: "Expand Your Market",
       subtitle: "Reach New Customers",
-      description: "Showcase your products to 15,000+ active business buyers. Increase your sales and grow your customer base exponentially.",
-      backgroundImage: "103.jpeg",
+      description:
+        "Showcase your products to 15,000+ active business buyers. Increase your sales and grow your customer base exponentially.",
+      backgroundImage: "/imm.jpeg",
       ctaText: "List Your Business",
       secondaryCta: "See Pricing",
       icon: <RocketLaunch />,
       badge: "95% Success Rate",
+      fullDescription: "Expand your market reach with our powerful marketing tools and extensive buyer network. Showcase your products to thousands of verified business buyers looking for exactly what you offer. Our platform provides analytics, lead generation, and sales tools to maximize your growth potential.",
+      features: [
+        "Product Showcase",
+        "Targeted Marketing",
+        "Sales Analytics",
+        "Lead Generation"
+      ],
+      stats: [
+        { label: "Active Buyers", value: "15,000+" },
+        { label: "Growth Rate", value: "95%" },
+        { label: "Countries", value: "25+" }
+      ]
     },
-  ];
-
-  const popularCategories = [
-    "Manufacturing",
-    "Retail",
-    "Handicrafts",
-    "Food",
-    "Textiles",
-    "Electronics",
   ];
 
   const handleSearchSubmit = () => {
@@ -228,7 +267,9 @@ function HeroSection({
     }
   };
 
-  // Auto-rotate slides
+  // -----------------------
+  // 🔄 AUTO-ROTATE CAROUSEL
+  // -----------------------
   useEffect(() => {
     if (isAutoPlaying && heroSlides.length > 1) {
       slideIntervalRef.current = setInterval(() => {
@@ -237,30 +278,54 @@ function HeroSection({
         );
       }, 5000);
     }
-
-    return () => {
-      if (slideIntervalRef.current) {
-        clearInterval(slideIntervalRef.current);
-      }
-    };
-  }, [isAutoPlaying, heroSlides.length]);
+    return () => clearInterval(slideIntervalRef.current);
+  }, [isAutoPlaying]);
 
   const goToSlide = (index) => {
     setCurrentSlide(index);
-    if (slideIntervalRef.current) {
-      clearInterval(slideIntervalRef.current);
-    }
-    setTimeout(() => setIsAutoPlaying(true), 5000);
+    clearInterval(slideIntervalRef.current);
+    setTimeout(() => setIsAutoPlaying(true), 4000);
   };
 
-  const nextSlide = () => {
-    goToSlide(currentSlide === heroSlides.length - 1 ? 0 : currentSlide + 1);
+  const nextSlide = () => goToSlide((currentSlide + 1) % heroSlides.length);
+  const prevSlide = () =>
+    goToSlide(
+      currentSlide === 0 ? heroSlides.length - 1 : currentSlide - 1
+    );
+
+  // -----------------------
+  // CURTAIN OPEN/CLOSE FUNCTIONS
+  // -----------------------
+  const openCurtain = (slideIndex) => {
+    setSelectedSlide(slideIndex);
+    setCurtainOpen(true);
+    document.body.style.overflow = 'hidden'; // Prevent scrolling
+    setIsAutoPlaying(false);
   };
 
-  const prevSlide = () => {
-    goToSlide(currentSlide === 0 ? heroSlides.length - 1 : currentSlide - 1);
+  const closeCurtain = () => {
+    setCurtainOpen(false);
+    document.body.style.overflow = 'auto'; // Restore scrolling
+    setTimeout(() => {
+      setSelectedSlide(null);
+      setIsAutoPlaying(true);
+    }, 500);
   };
 
+  // Close curtain on Escape key
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && curtainOpen) {
+        closeCurtain();
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [curtainOpen]);
+
+  // -----------------------
+  // OUTSIDE CLICK HIDE SUGGESTIONS
+  // -----------------------
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -271,302 +336,258 @@ function HeroSection({
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [onHideSuggestions]);
-
-  const currentSlideData = heroSlides[currentSlide];
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
-    <section
-      className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 via-teal-800 to-emerald-900 overflow-hidden"
-      onMouseEnter={() => setIsAutoPlaying(false)}
-      onMouseLeave={() => setIsAutoPlaying(true)}
-    >
-      {/* Background Carousel */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-black/40 z-10"></div>
-        {heroSlides.map((slide, index) => (
-          <div
-            key={slide.id}
-            className={`absolute inset-0 bg-cover bg-center bg-no-repeat transition-opacity duration-1000 ${
-              index === currentSlide ? "opacity-100" : "opacity-0"
-            }`}
-            style={{
-              backgroundImage: `url('${slide.backgroundImage}')`,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Floating Elements */}
-      {/* <div className="absolute top-20 left-10 w-4 h-4 bg-teal-400 rounded-full animate-float"></div>
-      <div
-        className="absolute top-40 right-20 w-6 h-6 bg-blue-400 rounded-full animate-float"
-        style={{ animationDelay: "1s" }}
-      ></div>
-      <div
-        className="absolute bottom-32 left-20 w-3 h-3 bg-emerald-400 rounded-full animate-float"
-        style={{ animationDelay: "2s" }}
-      ></div> */}
-
-      {/* Carousel Navigation Arrows */}
-      {heroSlides.length > 1 && (
-        <>
-          <button
-            onClick={prevSlide}
-            className="absolute hidden left-4 top-1/2 transform -translate-y-1/2 z-20 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-all group"
-            aria-label="Previous slide"
-          >
-            <svg
-              className="w-6 h-6 group-hover:scale-110 transition-transform"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+    <>
+      {/* MAIN HERO SECTION */}
+      <section className="w-full flex flex-col items-center justify-center py-6 px-3 lg:px-10 relative">
+        <div className="w-full bg-white rounded-3xl p-6 lg:p-10 space-y-8">
+          {/* 🔵 TOP CAROUSEL WITH CURTAIN TRIGGER */}
+          <div className="w-full flex justify-center">
+            <div 
+              className="w-full h-60 sm:h-72 md:h-80 rounded-2xl overflow-hidden cursor-pointer group"
+              onClick={() => openCurtain(currentSlide)}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
-          {/* <button
-            onClick={nextSlide}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 w-12 h-12 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-all group"
-            aria-label="Next slide"
-          >
-            <svg
-              className="w-6 h-6 group-hover:scale-110 transition-transform"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </button> */}
-        </>
-      )}
-
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          {/* Left Content - Carousel Text */}
-          <div className="text-white space-y-8">
-            <div className="space-y-6">
-              <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
-                <span className="text-sm font-sans">
-                  {currentSlideData.badge}
-                </span>
-              </div>
-
-              {/* Animated Text Content */}
-              <div className="space-y-4">
-                <h1 className="text-5xl  lg:text-6xl font-sans font-semibold leading-tight">
-                  <div className="bg-gradient-to-r from-white to-[var(--color-accent-500)] bg-clip-text text-transparent">
-
-                    {currentSlideData.title}
-                  </div>
-                  <div className=" text-[var(--color-accent-100)] mt-2">
-                    {currentSlideData.subtitle}
-                  </div>
-                </h1>
-                <p className="text-xl text-[var(--color-accent-100)] leading-relaxed">
-                  {currentSlideData.description}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button  onClick={() => router.push("/listings")} className="group bg-white text-[var(--color-accent-800)] px-8 py-4 rounded-xl font-semibold text-lg transition-all transform hover:scale-105 shadow-2xl hover:text[var(--color-accent-500)] flex items-center justify-center">
-                <span>{currentSlideData.ctaText}</span>
-                <svg
-                  className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={heroSlides[currentSlide].id}
+                  initial={{ opacity: 0, x: 40 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -40 }}
+                  transition={{ duration: 0.6 }}
+                  className="relative w-full h-full"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  <Image
+                    src={heroSlides[currentSlide].backgroundImage}
+                    alt="Hero Slide"
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                </svg>
-              </button>
-              {/* <button className="border-2 border-white/30 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all hover:bg-white/10 backdrop-blur-sm">
-                {currentSlideData.secondaryCta}
-              </button> */}
+                  
+                  {/* Overlay with click hint */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-2 text-white bg-black/50 backdrop-blur-sm px-4 py-2 rounded-full">
+                      <Play className="w-4 h-4" />
+                      <span className="text-sm font-medium">Click to explore</span>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
             </div>
-
-            {/* <div className="flex items-center space-x-6 text-sm text-blue-200">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span>Live Marketplace</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                <span>Verified Partners</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
-                <span>Secure Transactions</span>
-              </div>
-            </div> */}
           </div>
 
-          {/* Search Card */}
-          <div className="relative">
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-8 shadow-2xl">
-              <div className="space-y-6 ">
+          {/* 🔻 BOTTOM SECTION — MOBILE STACK / DESKTOP ROW */}
+          <div className="flex flex-col md:flex-row gap-6 w-full">
+            {/* LEFT TEXT CARD */}
+            <div className="w-full md:w-1/3 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-bold text-gray-900">About MSME Sahaay</h3>
+                <button 
+                  onClick={() => router.push('/about')}
+                  className="text-blue-600 hover:text-blue-700 flex items-center space-x-1 text-sm"
+                >
+                  <span>Learn more</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-gray-700 text-sm font-sans leading-relaxed">
+                MSME Sahaay is a modern platform designed to uplift MSMEs with the right tools, visibility, and guidance. We help businesses grow faster by simplifying selling, buying, networking, and branding. With MSME Sahaay, every small business gets the power to think bigger, act smarter, and scale confidently.
+              </p>
+              
+              {/* Quick Stats */}
+              <div className="grid grid-cols-3 gap-2 pt-4 border-t">
                 <div className="text-center">
-                  <h3 className="text-2xl font-sans font-semibold text-white mb-2">
-                    Find Business Partners
-                  </h3>
-                  <p className="text-blue-100">
-                    Search across 5,000+ verified listings
-                  </p>
+                  <div className="text-lg font-bold text-blue-600">10K+</div>
+                  <div className="text-xs text-gray-600">Businesses</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-green-600">95%</div>
+                  <div className="text-xs text-gray-600">Success Rate</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-lg font-bold text-purple-600">150+</div>
+                  <div className="text-xs text-gray-600">Cities</div>
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT MINI CAROUSEL GRID */}
+            <div className="w-full md:w-2/3">
+              <div className="grid grid-cols-3 gap-4">
+                {heroSlides.map((slide, index) => (
+                  <motion.div
+                    key={slide.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="relative h-56 rounded-2xl overflow-hidden shadow-md border border-gray-200 cursor-pointer group"
+                    onClick={() => openCurtain(index)}
+                  >
+                    <Image
+                      src={slide.backgroundImage}
+                      alt={slide.title}
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    
+                    {/* Content Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent p-4 flex flex-col justify-end">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <div className="w-6 h-6 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                          {slide.icon}
+                        </div>
+                        <span className="text-white/90 text-xs font-medium">{slide.badge}</span>
+                      </div>
+                      <h4 className="text-white font-semibold text-sm mb-1">{slide.title}</h4>
+                      <p className="text-white/80 text-xs line-clamp-2">{slide.description}</p>
+                      
+                      {/* Expand Button */}
+                      <div className="absolute top-4 right-4 w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <ExternalLink className="w-4 h-4 text-white" />
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Carousel Controls */}
+          <div className="flex justify-center space-x-4">
+            {heroSlides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => goToSlide(index)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  currentSlide === index 
+                    ? 'bg-blue-600 w-8' 
+                    : 'bg-gray-300 hover:bg-gray-400'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CURTAIN OVERLAY */}
+      <AnimatePresence>
+        {curtainOpen && selectedSlide !== null && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+              onClick={closeCurtain}
+            />
+            
+            {/* Curtain Panel */}
+            <motion.div
+              ref={curtainRef}
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ 
+                type: "spring",
+                damping: 25,
+                stiffness: 200
+              }}
+              className="fixed top-0 right-0 h-full w-full md:w-3/4 lg:w-2/3 bg-white z-50 overflow-y-auto shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close Button */}
+              <button
+                onClick={closeCurtain}
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center z-50"
+              >
+                <X className="w-5 h-5 text-gray-700" />
+              </button>
+
+              {/* Curtain Content */}
+              <div className="h-full">
+                {/* Hero Image */}
+                <div className="relative h-72 md:h-80 w-full">
+                  <Image
+                    src={heroSlides[selectedSlide].backgroundImage}
+                    alt={heroSlides[selectedSlide].title}
+                    fill
+                    className="object-cover"
+                  />
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-[var(--color-accent-100)] font-medium mb-3">
-                      Your Location
-                    </label>
-                    <div className="flex space-x-3">
-                      <input
-                        type="text"
-                        value={userLocation}
-                        onChange={(e) => onLocationChange(e.target.value)}
-                        placeholder="Enter city or pincode"
-                        className="flex-1 bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-[var(--color-accent-100)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-200)] backdrop-blur-sm"
-                      />
-                      <button
-                        onClick={onUseLocation}
-                        className="bg-white/20 hover:bg-white/30 text-[var(--color-accent-100)] px-4 py-3 rounded-xl font-medium transition-all backdrop-blur-sm border border-white/20 flex items-center gap-2"
-                      >
-                        <LocationOn className="w-4 h-4" /> Detect
-                      </button>
+                {/* Content */}
+                <div className="p-6 md:p-8 lg:p-12">
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                        {heroSlides[selectedSlide].icon}
+                      </div>
+                      <div>
+                        <div className="text-sm text-blue-600 font-medium">
+                          {heroSlides[selectedSlide].badge}
+                        </div>
+                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+                          {heroSlides[selectedSlide].title}
+                        </h1>
+                        <p className="text-gray-600">{heroSlides[selectedSlide].subtitle}</p>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="relative" ref={searchInputRef}>
-                    <label className="block text-[var(--color-accent-100)] font-medium mb-3">
-                      What are you looking for?
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Products, services, or businesses..."
-                        value={localSearchQuery}
-                        onChange={(e) => {
-                          setLocalSearchQuery(e.target.value);
-                        }}
-                        onKeyPress={handleKeyPress}
-                        className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-[var(--color-accent-100)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-200)] backdrop-blur-sm pr-20"
-                      />
-                      <button
-                        onClick={handleSearchSubmit}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white px-4 py-2 rounded-lg font-medium transition-all flex items-center space-x-2"
-                      >
-                        <Search className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    {showSuggestions && searchSuggestions.length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-[var(--color-accent-200)] overflow-hidden z-50">
-                        {searchSuggestions.map((suggestion, index) => (
-                          <button
-                            key={index}
-                            onClick={() => {
-                              onSuggestionSelect(suggestion);
-                              setLocalSearchQuery(suggestion.display);
-                            }}
-                            className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 flex items-center space-x-3 transition-colors"
-                          >
-                            <span
-                              className={`text-lg ${
-                                suggestion.type === "category"
-                                  ? "text-blue-500"
-                                  : suggestion.type === "seller"
-                                  ? "text-green-500"
-                                  : "text-teal-500"
-                              }`}
-                            >
-                              {suggestion.type === "category" ? (
-                                "📁"
-                              ) : suggestion.type === "seller" ? (
-                                "🏢"
-                              ) : (
-                                <Search className="w-4 h-4" />
-                              )}
-                            </span>
-                            <div className="flex-1">
-                              <div className="font-medium text-gray-900">
-                                {suggestion.display}
-                              </div>
-                              <div className="text-sm text-gray-500 capitalize">
-                                {suggestion.type}
-                              </div>
-                            </div>
-                          </button>
-                        ))}
+                  {/* Stats */}
+                  <div className="grid grid-cols-3 gap-4 mb-8 p-4 bg-gray-50 rounded-xl">
+                    {heroSlides[selectedSlide].stats?.map((stat, index) => (
+                      <div key={index} className="text-center">
+                        <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
+                        <div className="text-sm text-gray-600">{stat.label}</div>
                       </div>
-                    )}
+                    ))}
+                  </div>
 
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {popularCategories.map((category) => (
-                        <button
-                          key={category}
-                          onClick={() => {
-                            setLocalSearchQuery(category);
-                            onSearch(category);
-                          }}
-                          className="font-sans bg-white/10 hover:bg-white/20 text-[var(--color-accent-100)] px-4 py-2 rounded-lg text-sm transition-all backdrop-blur-sm border border-white/10"
-                        >
-                          {category}
-                        </button>
+                  {/* Full Description */}
+                  <div className="mb-8">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-900">Overview</h3>
+                    <p className="text-gray-700 leading-relaxed">
+                      {heroSlides[selectedSlide].fullDescription}
+                    </p>
+                  </div>
+
+                  {/* Features */}
+                  <div className="mb-8">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-900">Key Features</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {heroSlides[selectedSlide].features?.map((feature, index) => (
+                        <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          <span className="text-gray-700">{feature}</span>
+                        </div>
                       ))}
                     </div>
                   </div>
+
+                  {/* CTA Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-4 pt-8 border-t">
+                    <button className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors flex-1 flex items-center justify-center space-x-2">
+                      <span>{heroSlides[selectedSlide].ctaText}</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                    <button className="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors flex-1">
+                      {heroSlides[selectedSlide].secondaryCta}
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Carousel Indicators */}
-      {/* {heroSlides.length > 1 && (
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 flex space-x-3">
-          {heroSlides.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => goToSlide(index)}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                index === currentSlide
-                  ? "bg-white w-8"
-                  : "bg-white/50 hover:bg-white/70"
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
-      )} */}
-
-      {/* Scroll Indicator */}
-      {/* <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20">
-        <div className="animate-bounce">
-          <div className="w-6 h-10 border-2 border-white rounded-full flex justify-center">
-            <div className="w-1 h-3 bg-white rounded-full mt-2"></div>
-          </div>
-        </div>
-      </div> */}
-    </section>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
