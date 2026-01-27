@@ -884,12 +884,12 @@ function StatsSection({ stats }) {
 // ============================================================================
 function TopCategoriesSection1({ topcategories, onCategorySelect }) {
   const router = useRouter();
-  
+
   const slugify = (text) => {
     return text
       .toLowerCase()
       .trim()
-      .replace(/&/g, "& ")
+      .replace(/&/g, "and")
       .replace(/[^a-z0-9\s-]/g, "")
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-")
@@ -901,58 +901,122 @@ function TopCategoriesSection1({ topcategories, onCategorySelect }) {
     router.push(`/categories/${slug}/${categoryId}`);
   };
 
-  const handleImageLoad = (e) => {
-    e.target.style.opacity = '1';
-  };
-
-  const handleImageError = (e) => {
-    e.target.src = `https://via.placeholder.com/${e.target.width}x${e.target.height}/f3f4f6/6b7280?text=${e.target.alt}`;
-  };
-
   if (!topcategories || topcategories.length === 0) {
     return (
-      <div className="w-full py-16 bg-gray-50">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-600">Loading categories...</h2>
-        </div>
+      <div className="w-full py-16 bg-gray-50 text-center">
+        <h2 className="text-2xl font-bold text-gray-600">Loading categories...</h2>
       </div>
     );
   }
 
-  return (
-    <section className="py-10 bg-[var(--color-accent-50)]">
-      <h2 className="text-center text-3xl font-sans font-semibold mb-10 text-gray-800">
-        Top Categories
-      </h2>
-      <div className=" grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-5 max-w-7xl mx-auto px-4">
-        {topcategories.map((c, i) => (
-          <div 
-            key={i}
-            className="rounded-xl overflow-hidden shadow-lg hover:scale-[1.03] transition-all duration-300 cursor-pointer bg-white"
-            onClick={() => handleCategoryClick(c.id, c.name)}
-          >
-            <div className="relative h-52 bg-gray-200">
-  <Image 
-    src={c.image_url}
-    alt={c.name || c.title}
-    fill
-    className="w-full h-full object-cover duration-300 opacity-0"
-    onLoad={handleImageLoad}
-    onError={handleImageError}
-    loading="lazy"
-  />
-</div>
-            <div className="p-5">
-              <h3 className="text-sm font-sans text-gray-800 group-hover:text-teal-600 transition-colors">
-                {c.name}
-              </h3>
+  // Get three categories
+  const firstCategory = topcategories[0] || {};
+  const secondCategory = topcategories[1] || {};
+  const thirdCategory = topcategories[2] || {};
+  
+  // Get subcategories for each (6 each)
+  const subCategories0 = (firstCategory?.subcategories || []).slice(0, 6);
+  const subCategories1 = (secondCategory?.subcategories || []).slice(0, 6);
+  const subCategories2 = (thirdCategory?.subcategories || []).slice(0, 6);
+
+  // Function to render each category section
+  const renderCategorySection = (category, subCategories, index) => (
+    <div key={category.id || index} className="max-w-7xl mx-auto px-6 border-t-5 border-blue-800 shadow-xs rounded-2xl mb-10">
+      {/* Main Category Header */}
+      <div className="mb-5 mt-5">
+        <h1 className="text-3xl font-sans font-semibold text-[var(--color-black-darker)] pb-3">
+          {category?.name || `Category ${index + 1}`}
+        </h1>
+      </div>
+
+      {/* Main Content Box */}
+      <div className="bg-white rounded-2xl overflow-hidden mb-0.5">
+        <div className="flex flex-col lg:flex-row">
+          
+          {/* Left Side: Category Photo & Description */}
+          <div className="lg:w-5/12 mb-5 p-4 rounded-xl">
+            <div className="relative h-70 rounded-xl overflow-hidden shadow-lg mb-3">
+              <Image
+                src={category?.image_url || "/placeholder-category.jpg"}
+                alt={category?.name || `Category ${index + 1}`}
+                fill
+                className="object-cover hover:scale-105 transition duration-500"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <p className="text-[var(--color-accent-800)] font-sans font-semibold leading-relaxed">
+                {category?.name || `Category ${index + 1}`}
+              </p>
+              
+              <div className="pt-0 mb-1">
+                <button
+                  onClick={() => handleCategoryClick(category.id, category.name)}
+                  className="bg-[var(--color-accent-800)] hover:bg-[var(--color-accent-900)] text-white py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-200 hover:scale-105 shadow-sm hover:shadow-md"
+                >
+                  View Details
+                </button>
+              </div>
             </div>
           </div>
-        ))}
+
+          {/* Right Side: Subcategories Grid */}
+          <div className="lg:w-7/12 p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {subCategories.map((subCategory, subIndex) => (
+                <div
+                  key={subCategory.id || subIndex}
+                  onClick={() => handleCategoryClick(subCategory.id, subCategory.name)}
+                  className="bg-white rounded-xs p-3 hover:shadow-md hover:border-blue-200 transition-all duration-200 cursor-pointer"
+                >
+                  {/* Category Name */}
+                  <h4 className="text-base font-semibold text-[var(--color-accent-800)] mb-3 text-center line-clamp-1">
+                    {subCategory.name || `Subcategory ${subIndex + 1}`}
+                  </h4>
+
+                  <div className="flex gap-3">
+                    {/* Left: Image */}
+                    <div className="relative w-20 h-20 flex-shrink-0 rounded-md overflow-hidden">
+                      <Image
+                        src={subCategory.image_url || "/placeholder-subcategory.jpg"}
+                        alt={subCategory.name || `Subcategory ${subIndex + 1}`}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+
+                    {/* Right: Description */}
+                    <div className="flex-1">
+                      <p className="text-xs font-sans font-semibold text-[var(--color-accent-800)] line-clamp-4">
+                        {subCategory.description || subCategory.name || "Explore quality products in this category."}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
+    </div>
+  );
+
+  return (
+    <section className="py-12 bg-white">
+      <h2 className="text-center text-3xl font-semibold mb-8 text-gray-800">Top Categories</h2>
+
+      {/* Render first category */}
+      {firstCategory && renderCategorySection(firstCategory, subCategories0, 0)}
+      
+      {/* Render second category */}
+      {secondCategory && renderCategorySection(secondCategory, subCategories1, 1)}
+      
+      {/* Render third category */}
+      {thirdCategory && renderCategorySection(thirdCategory, subCategories2, 2)}
     </section>
   );
 }
+
 
 // ============================================================================
 // TOP CATEGORIES SECTION 2 COMPONENT
