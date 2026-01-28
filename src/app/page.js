@@ -1136,72 +1136,93 @@ function TopCategoriesSection2({ onCategorySelect }) {
 function TopCategoriesSection3({ onCategorySelect }) {
   const router = useRouter();
 
-  // Section 3 mock data
-  const CATEGORIES_SECTION3 = {
-    section5: [
-      { title: "Travel Agencies", img: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=350&h=250&fit=crop&auto=format" },
-      { title: "Adventure Trips", img: "https://images.unsplash.com/photo-1500534623283-312aade485b7?w=350&h=250&fit=crop&auto=format" },
-      { title: "Tour Guides", img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=350&h=250&fit=crop&auto=format" },
-      { title: "Luxury Resorts", img: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=350&h=250&fit=crop&auto=format" },
-    ],
-  };
+  const CATEGORIES_SECTION3 = [
+    {
+      title: "Travel Agencies",
+      img: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=350&h=250&fit=crop&auto=format",
+    },
+    {
+      title: "Adventure Trips",
+      img: "https://images.unsplash.com/photo-1500534623283-312aade485b7?w=350&h=250&fit=crop&auto=format",
+    },
+    {
+      title: "Tour Guides",
+      img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=350&h=250&fit=crop&auto=format",
+    },
+    {
+      title: "Luxury Resorts",
+      img: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=350&h=250&fit=crop&auto=format",
+    },
+  ];
 
-  const handleCategoryClick = (categoryName) => {
-    const slug = categoryName.toLowerCase().replace(/\s+/g, '-');
+  const handleCategoryClick = (category) => {
+    const slug = category
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
+    onCategorySelect?.(category);
+
     router.push(`/categories/${slug}`);
   };
 
-  const handleImageLoad = (e) => {
-    e.target.style.opacity = '1';
-  };
-
-  const handleImageError = (e) => {
-    e.target.src = `https://via.placeholder.com/${e.target.width}x${e.target.height}/f3f4f6/6b7280?text=${e.target.alt}`;
-  };
-
   return (
- <section className="py-20 bg-[var(--color-accent-50)] text-[var(--color-accent-900)]">
-  <h2 className="text-4xl font-semibold text-center mb-12 
-    bg-gradient-to-r from-[var(--color-accent-900)] to-[var(--color-accent-700)]
-    bg-clip-text text-transparent">
-    Explore Travel
-  </h2>
-
-  <div className="flex flex-col md:flex-row justify-center gap-8 px-6 max-w-7xl mx-auto">
-
-    {CATEGORIES_SECTION3.section5.map((c, i) => (
-      <div
-        key={i}
-        className="flex-1 bg-white rounded-2xl overflow-hidden 
-        shadow-lg hover:shadow-2xl transition-all duration-300 
-        hover:-translate-y-1 cursor-pointer border border-[var(--color-accent-200)]"
-        onClick={() => handleCategoryClick(c.title)}
+    <section className="py-20 bg-[var(--color-accent-50)]">
+      {/* Heading */}
+      <h2
+        className="text-4xl md:text-5xl font-bold text-center mb-14
+        bg-gradient-to-r from-[var(--color-accent-900)] to-[var(--color-accent-600)]
+        bg-clip-text text-transparent"
       >
-        {/* Image Box */}
-     <div className="relative w-20 h-20 rounded-full overflow-hidden 
-bg-[var(--color-accent-800)] flex items-center justify-center shadow-md">
-  <Image
-    src={c.img}
-    alt={c.title}
-    width={80}
-    height={80}
-    className="w-full h-full object-cover opacity-90"
-    loading="lazy"
-  />
-</div>
+        Explore Travel
+      </h2>
 
-        {/* Title */}
-        <div className="p-6 text-center font-semibold text-xl text-[var(--color-accent-900)]">
-          {c.title}
-        </div>
+      {/* Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 px-6 max-w-7xl mx-auto">
+        {CATEGORIES_SECTION3.map((item, index) => (
+          <div
+            key={index}
+            onClick={() => handleCategoryClick(item.title)}
+            className="group bg-white rounded-2xl p-8 cursor-pointer
+            border border-[var(--color-accent-200)]
+            shadow-md hover:shadow-2xl
+            transition-all duration-300
+            hover:-translate-y-2"
+          >
+            {/* Image */}
+            <div
+              className="mx-auto mb-6 w-24 h-24 rounded-full overflow-hidden
+              bg-[var(--color-accent-800)]
+              flex items-center justify-center
+              shadow-lg group-hover:scale-110
+              transition-transform duration-300"
+            >
+              <Image
+                src={item.img}
+                alt={item.title}
+                width={96}
+                height={96}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </div>
+
+            {/* Title */}
+            <h3
+              className="text-center text-xl font-semibold
+              text-[var(--color-accent-900)]
+              group-hover:text-[var(--color-accent-600)]
+              transition-colors"
+            >
+              {item.title}
+            </h3>
+          </div>
+        ))}
       </div>
-    ))}
-
-  </div>
-</section>
-
+    </section>
   );
 }
+
 
 // ============================================================================
 // CATEGORY GRID COMPONENT
